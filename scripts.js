@@ -6,6 +6,8 @@ dasApp.tripForm = $('#trip-input');
 dasApp.originInput = $('#origin-input');
 dasApp.destinationInput = $('#destination-input');
 dasApp.switchInputsButton = $('#switch-locations');
+dasApp.distanceOutput = $('#distance-output');
+dasApp.durationOutput = $('#duration-output')
 
 // Log searched cities with their coordinate array to save extra api requests
 dasApp.loggedCoordinates = {};
@@ -34,7 +36,26 @@ dasApp.getSearchTerms = function() {
     }
 }
 
+// Convert distance to km and output to the page
+// Convert duration to hours and output to the page
+dasApp.showNavigationInfo = (distance, duration) => {
+    const distanceInKm = Math.round(distance/1000);
+    dasApp.distanceOutput.html(distanceInKm + "KM");
+
+    const durationHrs = Math.floor(duration/3600);
+    const durationMin = Math.floor((duration % 3600) / 60);
+    if (durationHrs) {
+        const durationString = `${durationHrs} Hours and ${durationMin} Minutes`;
+        dasApp.durationOutput.html(durationString);
+    } else {
+        const durationString = `${durationMin} Minutes`;
+        dasApp.durationOutput.html(durationString);
+    }
+}
+
 // Take origin and destination coordinates
+// Query the API for directions
+// If there is navigation information, place it onto the page
 dasApp.getNavigationInfo = coordinatesObject => {
     const coordinatesString = coordinatesObject.orgin[0] + "," + coordinatesObject.orgin[1] + ";" + coordinatesObject.destination[0] + "," + coordinatesObject.destination[1];
     
@@ -44,7 +65,11 @@ dasApp.getNavigationInfo = coordinatesObject => {
         dataType: 'json'
     }).then(navigationObject => {
         const navInfo = navigationObject.routes[0];
-        console.log(navInfo.distance, navInfo.duration);
+        if (navInfo) {
+            dasApp.showNavigationInfo(navInfo.distance, navInfo.duration);
+        } else {
+            console.log("Sorry, there were no directions found for these locations.")
+        }
     }).catch(err => {
         console.log("There must have been a mistake", err);
     });
@@ -59,7 +84,13 @@ dasApp.getFormValues = () => {
         orgin: dasApp.loggedCoordinates[originName],
         destination: dasApp.loggedCoordinates[destinationName]
     };
-    const navigationInfo = dasApp.getNavigationInfo(coordinates);
+    dasApp.getNavigationInfo(coordinates);
+}
+
+dasApp.switchInputs = () => {
+    const tempOriginVal = dasApp.originInput.val();
+    dasApp.originInput.val(dasApp.destinationInput.val());
+    dasApp.destinationInput.val(tempOriginVal);
 }
 
 // init Function
@@ -70,7 +101,7 @@ dasApp.init = () => {
     });
     dasApp.originInput.on('keyup', dasApp.getSearchTerms);
     dasApp.destinationInput.on('keyup', dasApp.getSearchTerms);
-    dasApp.switchInputsButton.on('input', e => console.log(e));    
+    dasApp.switchInputsButton.on('click', dasApp.switchInputs);    
 };
 
 // Document Ready
