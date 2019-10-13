@@ -16,8 +16,11 @@
     <main>
         <form autocomplete="off" id="trip-input">
             <div class="text-input">
-                <input id="origin-input" type="text" name="origin" list="origin-locations" placeholder="Starting location">
-                <datalist id="origin-locations"></datalist>
+                <label for="origin-input">
+                     Starting location
+                    <input id="origin-input" type="text" name="origin" list="origin-locations" placeholder="Toronto, Ontario">
+                    <datalist id="origin-locations"></datalist>
+                </label>
             </div>
             <input type="submit">
         </form>
