@@ -14,24 +14,32 @@
         <p>Fall for a trip system that works.</p>
     </header>
     <main>
-        <form autocomplete="off" id="trip-input">
-            <div class="text-input">
-                <label for="origin-input">
-                     Starting location
-                    <input id="origin-input" type="text" name="origin" list="origin-locations" placeholder="Toronto, Ontario">
-                    <datalist id="origin-locations"></datalist>
-                </label>
+        <section id="user-input">
+            <div class="wrapper">
+                <form autocomplete="off" id="trip-input">
+                    <div class="text-input">
+                        <label for="origin-input">
+                                Starting location
+                            <input id="origin-input" type="text" name="origin" list="origin-locations" placeholder="Toronto, Ontario">
+                            <datalist id="origin-locations"></datalist>
+                        </label>
+                    </div>
+                    <button type="button" id="switch-locations">Turn around</button>
+                    <div class="text-input">
+                        <label for="destination-input">
+                                Finish line
+                            <input id="destination-input" type="text" name="destination" list="destination-locations" placeholder="Charlottetown, Prince Edward Island">
+                            <datalist id="destination-locations"></datalist>
+                        </label>
+                    </div>
+                    <input type="submit">
+                </form>
             </div>
-            <a class="switch-locations" href="#">Turn this car around</a>
-            <div class="text-input">
-                <label for="destination-input">
-                     Finish line
-                    <input id="destination-input" type="text" name="destination" list="destination-locations" placeholder="Charlottetown, Prince Edward Island">
-                    <datalist id="destination-locations"></datalist>
-                </label>
-            </div>
-            <input type="submit">
-        </form>
+        </section>
+        <section id="results">
+            <p id="distance"></p>
+            <p id="duration"></p>
+        </section>
     </main>
     <footer>
 
