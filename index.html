@@ -14,7 +14,13 @@
         <p>Fall for a trip system that works.</p>
     </header>
     <main>
-
+        <form autocomplete="off" id="trip-input">
+            <div class="text-input">
+                <input id="origin-input" type="text" name="origin" list="origin-locations" placeholder="Starting location">
+                <datalist id="origin-locations"></datalist>
+            </div>
+            <input type="submit">
+        </form>
     </main>
     <footer>
 
