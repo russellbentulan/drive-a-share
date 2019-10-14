@@ -6,8 +6,10 @@ dasApp.tripForm = $('#trip-input');
 dasApp.originInput = $('#origin-input');
 dasApp.destinationInput = $('#destination-input');
 dasApp.switchInputsButton = $('#switch-locations');
+dasApp.driversInput = $('#drivers-input');
 dasApp.distanceOutput = $('#distance-output');
-dasApp.durationOutput = $('#duration-output')
+dasApp.durationOutput = $('#duration-output');
+dasApp.driversContainer = $('#drivers-container');
 
 // Log searched cities with their coordinate array to save extra api requests
 dasApp.loggedCoordinates = {};
@@ -31,6 +33,7 @@ dasApp.getSearchTerms = function() {
                 dasApp.loggedCoordinates[locationInfo.place_name] = locationInfo.center;
             }
         }).catch(err => {
+            // TODO: Add a section to the page displaying the error
             console.log("There must have been a mistake", err);
         });
     }
@@ -53,6 +56,25 @@ dasApp.showNavigationInfo = (distance, duration) => {
     }
 }
 
+// Take total duration of drive and divide it between the drivers
+// Convert the times to hours and minutes and display on the page
+dasApp.calculateDriverTimes = totalDuration => {
+    totalDrivers = dasApp.driversInput.val();
+    dividedTime = totalDuration/totalDrivers;
+    dividedTimeHrs = Math.floor(dividedTime/3600);
+    dividedTimeMin = Math.floor((dividedTime % 3600) / 60);
+    for (i = totalDrivers; i > 0; i--) {
+        let timeString;
+        if (dividedTimeHrs) {
+            timeString = `Driver ${i}: ${dividedTimeHrs} Hours and ${dividedTimeMin} Minutes`;
+        } else {
+            timeString = `Driver ${i}: ${dividedTimeMin} Minutes`;
+        }
+        let driverHtml = `<p class="driver-info driver-${i}">${timeString}</p>`;
+        dasApp.driversContainer.prepend(driverHtml);
+    }
+}
+
 // Take origin and destination coordinates
 // Query the API for directions
 // If there is navigation information, place it onto the page
@@ -67,6 +89,7 @@ dasApp.getNavigationInfo = coordinatesObject => {
         const navInfo = navigationObject.routes[0];
         if (navInfo) {
             dasApp.showNavigationInfo(navInfo.distance, navInfo.duration);
+            dasApp.calculateDriverTimes(navInfo.duration);
         } else {
             console.log("Sorry, there were no directions found for these locations.")
         }
