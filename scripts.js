@@ -73,6 +73,7 @@ app.showNavigationInfo = () => {
 }
 
 // Convert seconds to hours and minutes
+// Check if the drive is long enough to have a string with hours and minutes output
 // Return a formatted string to output to the user
 app.formatTime = seconds => {
     const hours = Math.floor(seconds/3600);
@@ -93,14 +94,15 @@ app.formatTime = seconds => {
         formattedMinutes = minutes + ' minutes'
     }
     
-    if (!hours) {
+    if ( !hours && !minutes) {
+        formattedTime = "This drive is too short!";
+    } else if ( !hours ) {
         formattedTime = formattedMinutes;
     } else if (!minutes) {
         formattedTime = formattedHours;
     } else {
         formattedTime = formattedHours + ' and ' + formattedMinutes;
     }
-
     return formattedTime;
 }
 
@@ -108,28 +110,49 @@ app.formatTime = seconds => {
 // Display the drivers in each cycle
 app.displayDrivers = () => {
     app.driversContainer.empty();
+    
+    cycleInfoHtml = `
+        <h3>
+            Total cycles: ${app.totalCycles}
+        </h3>
+    `;
+    app.driversContainer.append(cycleInfoHtml);
+    
+    driverInfoHtml = `
+        <h4 class="driver">Each person's time behind the wheel: ${app.allDrivers[1].driveTime}</h4>
+        <p>Total Drivers: ${app.totalDrivers}</p>
+        `;
+        app.driversContainer.append(driverInfoHtml);
 
-    for (i = 1; i <= app.totalCycles; i++) {
-        const thisCycle = i;
-        const drivingThisCycle = [];
-        const cycleContainer = `<div class="cycle--${i}"></div>`;
-        for (i =1; i <= app.totalDrivers; i++) {
-            if (app.allDrivers[i].cycles.includes(thisCycle)) {
-                drivingThisCycle.push({
-                    name: app.allDrivers[i].name,
-                    driveTime: app.allDrivers[i].driveTime,
-                    id: i
-                });
-            }
-        }
 
-        if (drivingThisCycle) {
-            app.driversContainer.append(cycleContainer);
-            drivingThisCycle.forEach(function(driver) {
-                console.log(driver);
-            })
-        }
-    }
+    /***** WIP *****/
+    // for (i = 1; i <= app.totalCycles; i++) {
+    //     const thisCycle = i;
+    //     const drivingThisCycle = [];
+    //     const cycleContainer = $(`<div class="cycle--${i}"></div>`);
+    //     for (i = 1; i <= app.totalDrivers; i++) {
+    //         if (app.allDrivers[i].cycles.includes(thisCycle)) {
+    //             drivingThisCycle.push({
+    //                 name: app.allDrivers[i].name,
+    //                 driveTime: app.allDrivers[i].driveTime,
+    //                 id: i
+    //             });
+    //         }
+    //     }
+
+    //     app.driversContainer.append(cycleContainer);
+    //     drivingThisCycle.forEach(function(driver) {
+    //         driverHtml = `
+    //             <h3 class="driver-info__name">
+    //                 <span class="driver-info__title">Name:</span> ${driver.name}
+    //             </h3>
+    //             <p>
+    //                 <span class="driver-info__title">Drive Time:</span> ${driver.driveTime}
+    //             </p>
+    //         `;
+    //         cycleContainer.append(driverHtml);
+    //     });
+    // }
 }
 
 // Add new legs to divide the total drive
@@ -138,7 +161,7 @@ app.displayDrivers = () => {
 app.newDriverCycle = () => {
     app.totalCycles++;
     app.totalLegs += app.totalDrivers;
-    const driveTime = app.totalDuration / totalLegs;
+    const driveTime = app.totalDuration / app.totalLegs;
     for (i = 1; i <= app.totalDrivers; i++) {
         app.allDrivers[i].driveTime = app.formatTime(driveTime);
         app.allDrivers[i].cycles.push(app.totalCycles);
@@ -151,6 +174,7 @@ app.newDriverCycle = () => {
 // Set an empty drivers object
 // Populate the emptied drivers object with new drivers
 app.initialCycle = () => {
+    app.driversContainer.empty();
     app.totalCycles = 1;
     app.totalLegs = app.totalDrivers;
     app.allDrivers = {};
