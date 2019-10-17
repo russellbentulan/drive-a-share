@@ -22,6 +22,7 @@ app.totalDuration = null;
 app.totalDistance = null;
 app.totalDrivers = null;
 app.totalCycles = null;
+app.totalLegs = null;
 
 // Log searched cities with their coordinate array to save extra api requests
 app.loggedCoordinates = {};
@@ -71,28 +72,6 @@ app.showNavigationInfo = () => {
     }
 }
 
-/*  CHANGING THIS */
-// Take total duration of drive and divide it between the drivers
-// Convert the times to hours and minutes and display on the page
-// Add event listener to add a cycle for each driver
-app.calculateDriverTimesxxx = () => {
-    dividedTime = app.totalDuration / app.totalDrivers;
-    dividedTimeHrs = Math.floor(dividedTime/3600);
-    dividedTimeMin = Math.floor((dividedTime % 3600) / 60);
-    for (i = 1; i <= app.totalDrivers; i++) {
-        let timeString;
-        if (dividedTimeHrs) {
-            timeString = `${dividedTimeHrs} Hours and ${dividedTimeMin} Minutes`;
-        } else {
-            timeString = `${dividedTimeMin} Minutes`;
-        }
-        let driverHtml = `<h3 class="driver-info driver-${i}">Driver ${i}</h3>${timeString}`;
-        app.driversContainer.append(driverHtml);
-    }
-
-    app.addCycleButton.on('click', app.newDriverCycle);
-}
-
 // Convert seconds to hours and minutes
 // Return a formatted string to output to the user
 app.formatTime = seconds => {
@@ -103,15 +82,15 @@ app.formatTime = seconds => {
         formattedTime = '';
     
     if (hours === 1) {
-        formattedHours = hours + 'hour'
+        formattedHours = hours + ' hour'
     } else {
-        formattedHours = hours + 'hours'
+        formattedHours = hours + ' hours'
     }
 
     if (minutes === 1) {
-        formattedMinutes = minutes + 'minute'
+        formattedMinutes = minutes + ' minute'
     } else {
-        formattedMinutes = minutes + 'minutes'
+        formattedMinutes = minutes + ' minutes'
     }
     
     if (!hours) {
@@ -119,54 +98,74 @@ app.formatTime = seconds => {
     } else if (!minutes) {
         formattedTime = formattedHours;
     } else {
-        formattedTime = formattedHours + ' ' + formattedMinutes;
+        formattedTime = formattedHours + ' and ' + formattedMinutes;
     }
 
     return formattedTime;
 }
 
-// Take global drivers object information and display it to the page
-app.displayDriver = () => {
+// Check each cycle if it has drivers
+// Display the drivers in each cycle
+app.displayDrivers = () => {
     app.driversContainer.empty();
 
-    for (i = 1; i <= app.totalDrivers; i++) {
-        const driverInfo = app.allDrivers[i];
-        console.log(driverInfo);
+    for (i = 1; i <= app.totalCycles; i++) {
+        const thisCycle = i;
+        const drivingThisCycle = [];
+        const cycleContainer = `<div class="cycle--${i}"></div>`;
+        for (i =1; i <= app.totalDrivers; i++) {
+            if (app.allDrivers[i].cycles.includes(thisCycle)) {
+                drivingThisCycle.push({
+                    name: app.allDrivers[i].name,
+                    driveTime: app.allDrivers[i].driveTime,
+                    id: i
+                });
+            }
+        }
+
+        if (drivingThisCycle) {
+            app.driversContainer.append(cycleContainer);
+            drivingThisCycle.forEach(function(driver) {
+                console.log(driver);
+            })
+        }
     }
 }
 
-// Take total drive time and divide it between drivers on the first cycle
-// Calculate new drive times when there are 2 or more cycles
+// Add new legs to divide the total drive
+// Calculate new drive times for each driver and cycle
 // Display driver information on the page
 app.newDriverCycle = () => {
     app.totalCycles++;
-
-    if (app.totalCycles === 1) {
-        const initialTime = app.totalDuration / app.totalDrivers;
-        for (i = 1; i <= app.totalDrivers; i++) {
-            app.allDrivers[i] = {
-                name: 'Driver ' + i,
-                driveTime: initialTime,
-                cycles: [app.totalCycles]
-            }
-        }
-        app.displayDriver();
-    } else {
-        const driveTime = app.totalDuration / app.totalDrivers / app.totalCycles;
-        for (i = 1; i <= app.totalDrivers; i++) {
-            app.allDrivers[i].driveTime = driveTime;
-            app.allDrivers[i].cycles.push(app.totalCycles);
-        }
-        app.displayDriver();
+    app.totalLegs += app.totalDrivers;
+    const driveTime = app.totalDuration / totalLegs;
+    for (i = 1; i <= app.totalDrivers; i++) {
+        app.allDrivers[i].driveTime = app.formatTime(driveTime);
+        app.allDrivers[i].cycles.push(app.totalCycles);
     }
+
+    app.displayDrivers();
 }
 
 // Change total cycles to 0 ( newDriverCycle adds 1 cycle )
 // Set an empty drivers object
+// Populate the emptied drivers object with new drivers
 app.initialCycle = () => {
-    app.totalCycles = 0;
+    app.totalCycles = 1;
+    app.totalLegs = app.totalDrivers;
     app.allDrivers = {};
-    app.newDriverCycle();
+
+    const initialTime = app.totalDuration / app.totalLegs;
+    for (i = 1; i <= app.totalDrivers; i++) {
+        app.allDrivers[i] = {
+            name: 'Driver ' + i,
+            driveTime: app.formatTime(initialTime),
+            id: i,
+            cycles: [app.totalCycles],
+            isEditable: true
+        }
+    }
+    app.displayDrivers();
 }
 
 // Take origin and destination coordinates when form is submitted
