@@ -1,36 +1,53 @@
 // Namespace Object
-dasApp = {};
+app = {};
 
-// Caching selectors
-dasApp.tripForm = $('#trip-input');
-dasApp.originInput = $('#origin-input');
-dasApp.destinationInput = $('#destination-input');
-dasApp.switchInputsButton = $('#switch-locations');
-dasApp.driversInput = $('#drivers-input');
-dasApp.distanceOutput = $('#distance-output');
-dasApp.durationOutput = $('#duration-output');
-dasApp.driversContainer = $('#drivers-container');
+// Caching Selectors
+
+//  Trip Form inputs
+app.tripForm = $('#trip-input');
+app.originInput = $('#origin-input');
+app.destinationInput = $('#destination-input');
+app.switchInputsButton = $('#switch-locations');
+app.driversInput = $('#drivers-input');
+
+//  Trip information outputs
+app.distanceOutput = $('#distance-output');
+app.durationOutput = $('#duration-output');
+app.driversContainer = $('#drivers-container');
+
+//  Trip augmenting inputs
+app.addCycleButton = $('#add-cycle');
+
+
+// Global variables
+app.totalDuration = null;
+app.totalDistance = null;
+app.totalDrivers = null;
+app.totalCycles = null;
 
 // Log searched cities with their coordinate array to save extra api requests
-dasApp.loggedCoordinates = {};
+app.loggedCoordinates = {};
 
-// Get value of input element
-// Query data once 3 or more letters have been entered
+// Dynamically search for cities with corresponing geographic coordinates
+// Query API once 3 or  more letters have been entered
+// Check if the datalist contains the option returned
 // Add options to the datalist using the response
-// Save location name and coordinate array into the log object
-dasApp.getSearchTerms = function() {
+// Log location name and coordinates into a global object (only if it doesn't exist already)
+app.getSearchTerms = function() {
     searchTerms = $(this).val();
     if ( searchTerms.length >= 3 ) {
         $.ajax({
-            url: `${dasAppConfig.mbPlaces}${searchTerms}.json?access_token=${dasAppConfig.mbToken}&autocomplete=true&types=place&limit=5`,
+            url: `${appConfig.mbPlaces}${searchTerms}.json?access_token=${appConfig.mbToken}&autocomplete=true&types=place&limit=5`,
             method: 'GET',
             dataType: 'json'
         }).then(data => {
             const allLocations = data.features.values();
             for (const locationInfo of allLocations) {
-                const optiontHtml = `<option value="${locationInfo.place_name}"`;
-                $(this).next('datalist').append(optiontHtml);
-                dasApp.loggedCoordinates[locationInfo.place_name] = locationInfo.center;
+                if (!app.loggedCoordinates[locationInfo.place_name]) {
+                    app.loggedCoordinates[locationInfo.place_name] = locationInfo.center;
+                    const optionHtml = `<option value="${locationInfo.place_name}"`;
+                    $(this).next('datalist').append(optionHtml);
+                }
             }
         }).catch(err => {
             // TODO: Add a section to the page displaying the error
@@ -41,55 +58,114 @@ dasApp.getSearchTerms = function() {
 
 // Convert distance to km and output to the page
 // Convert duration to hours and output to the page
-dasApp.showNavigationInfo = (distance, duration) => {
-    const distanceInKm = Math.round(distance/1000);
-    dasApp.distanceOutput.html(distanceInKm + "KM");
+app.showNavigationInfo = () => {
+    const distanceInKm = Math.round(app.totalDistance/1000);
+    app.distanceOutput.html(distanceInKm + "KM");
 
-    const durationHrs = Math.floor(duration/3600);
-    const durationMin = Math.floor((duration % 3600) / 60);
+    const durationHrs = Math.floor(app.totalDuration / 3600);
+    const durationMin = Math.floor((app.totalDuration % 3600) / 60);
     if (durationHrs) {
         const durationString = `${durationHrs} Hours and ${durationMin} Minutes`;
-        dasApp.durationOutput.html(durationString);
+        app.durationOutput.html(durationString);
     } else {
         const durationString = `${durationMin} Minutes`;
-        dasApp.durationOutput.html(durationString);
+        app.durationOutput.html(durationString);
     }
+}
+
+/*  CHANGING THIS */
+// Take total duration of drive and divide it between the drivers
+// Convert the times to hours and minutes and display on the page
+// Add event listener to add a cycle for each driver
+app.calculateDriverTimesxxx = () => {
+    dividedTime = app.totalDuration / app.totalDrivers;
+    dividedTimeHrs = Math.floor(dividedTime/3600);
+    dividedTimeMin = Math.floor((dividedTime % 3600) / 60);
+    for (i = 1; i <= app.totalDrivers; i++) {
+        let timeString;
+        if (dividedTimeHrs) {
+            timeString = `${dividedTimeHrs} Hours and ${dividedTimeMin} Minutes`;
+        } else {
+            timeString = `${dividedTimeMin} Minutes`;
+        }
+        let driverHtml = `<h3 class="driver-info driver-${i}">Driver ${i}</h3>${timeString}`;
+        app.driversContainer.append(driverHtml);
+    }
+
+    app.addCycleButton.on('click', app.newDriverCycle);
 }
 
 // Take total duration of drive and divide it between the drivers
-// Convert the times to hours and minutes and display on the page
-dasApp.calculateDriverTimes = totalDuration => {
-    totalDrivers = dasApp.driversInput.val();
-    dividedTime = totalDuration/totalDrivers;
+app.calculateDriverTimesNO = () => {
+    dividedTime = app.totalDuration / app.totalDrivers;
     dividedTimeHrs = Math.floor(dividedTime/3600);
     dividedTimeMin = Math.floor((dividedTime % 3600) / 60);
-    for (i = totalDrivers; i > 0; i--) {
-        let timeString;
-        if (dividedTimeHrs) {
-            timeString = `Driver ${i}: ${dividedTimeHrs} Hours and ${dividedTimeMin} Minutes`;
-        } else {
-            timeString = `Driver ${i}: ${dividedTimeMin} Minutes`;
-        }
-        let driverHtml = `<p class="driver-info driver-${i}">${timeString}</p>`;
-        dasApp.driversContainer.prepend(driverHtml);
+}
+
+// Take global drivers object information and display it to the page
+app.displayDrivers = () => {
+    app.driversContainer.empty();
+
+    for (i = 1; i <= app.totalDrivers; i++) {
+        const driverInfo = app.allDrivers[i];
+        console.log(driverInfo)
     }
 }
 
-// Take origin and destination coordinates
+// Take total drive time and divide it between drivers on the first cycle
+// Calculate new drive times when there are 2 or more cycles
+// Display driver information on the page
+app.newDriverCycle = () => {
+    app.totalCycles++;
+
+    if (app.totalCycles === 1) {
+        const initialTime = app.totalDuration / app.totalDrivers;
+        for (i = 1; i <= app.totalDrivers; i++) {
+            app.allDrivers[i] = {
+                name: 'Driver ' + i,
+                driveTime: initialTime,
+                cycles: [app.totalCycles]
+            }
+        }
+    } else {
+        const driveTime = app.totalDuration / app.totalDrivers / app.totalCycles;
+        for (i = 1; i <= app.totalDrivers; i++) {
+            app.allDrivers[i].driveTime = driveTime;
+            app.allDrivers[i].cycles.push(app.totalCycles);
+        }
+    }
+
+    app.displayDrivers();
+}
+
+// Change total cycles to 0 ( newDriverCycle adds 1 cycle )
+// Set an empty drivers object
+app.initialCycle = () => {
+    app.totalCycles = 0;
+    app.allDrivers = {};
+    app.newDriverCycle();
+}
+
+// Take origin and destination coordinates when form is submitted
 // Query the API for directions
-// If there is navigation information, place it onto the page
-dasApp.getNavigationInfo = coordinatesObject => {
+// If there is navigation information, save the information
+// Output trip information and initiate the first driving cycle
+app.getNavigationInfo = coordinatesObject => {
     const coordinatesString = coordinatesObject.orgin[0] + "," + coordinatesObject.orgin[1] + ";" + coordinatesObject.destination[0] + "," + coordinatesObject.destination[1];
     
     $.ajax({
-        url: `${dasAppConfig.mbDirections}${coordinatesString}.json?access_token=${dasAppConfig.mbToken}`,
+        url: `${appConfig.mbDirections}${coordinatesString}.json?access_token=${appConfig.mbToken}`,
         method: 'GET',
         dataType: 'json'
     }).then(navigationObject => {
         const navInfo = navigationObject.routes[0];
         if (navInfo) {
-            dasApp.showNavigationInfo(navInfo.distance, navInfo.duration);
-            dasApp.calculateDriverTimes(navInfo.duration);
+            app.totalDuration = navInfo.duration;
+            app.totalDistance = navInfo.distance;
+            app.totalDrivers = app.driversInput.val();
+            
+            app.showNavigationInfo();
+            app.initialCycle();
         } else {
             console.log("Sorry, there were no directions found for these locations.")
         }
@@ -98,36 +174,38 @@ dasApp.getNavigationInfo = coordinatesObject => {
     });
 };
 
-// Get origin and destination values and match them to their coordinates
+// When user submits the form, get the origin and destination names and match them to their coordinates
 // Query the API for the navigation instructions
-dasApp.getFormValues = () => {
-    const originName = dasApp.originInput.val();
-    const destinationName = dasApp.destinationInput.val();
+app.getFormValues = () => {
+    const originName = app.originInput.val();
+    const destinationName = app.destinationInput.val();
     const coordinates = {
-        orgin: dasApp.loggedCoordinates[originName],
-        destination: dasApp.loggedCoordinates[destinationName]
+        orgin: app.loggedCoordinates[originName],
+        destination: app.loggedCoordinates[destinationName]
     };
-    dasApp.getNavigationInfo(coordinates);
+    app.getNavigationInfo(coordinates);
 }
 
-dasApp.switchInputs = () => {
-    const tempOriginVal = dasApp.originInput.val();
-    dasApp.originInput.val(dasApp.destinationInput.val());
-    dasApp.destinationInput.val(tempOriginVal);
+// Take the values from each location input and flip them around
+app.switchInputs = () => {
+    const tempOriginVal = app.originInput.val();
+    app.originInput.val(app.destinationInput.val());
+    app.destinationInput.val(tempOriginVal);
 }
 
 // init Function
-dasApp.init = () => {
-    dasApp.tripForm.on('submit', e => {
+app.init = () => {
+    app.originInput.on('input', app.getSearchTerms);
+    app.destinationInput.on('input', app.getSearchTerms);
+    app.switchInputsButton.on('click', app.switchInputs);    
+    app.tripForm.on('submit', e => {
         e.preventDefault();
-        dasApp.getFormValues();
+        app.getFormValues();
     });
-    dasApp.originInput.on('keyup', dasApp.getSearchTerms);
-    dasApp.destinationInput.on('keyup', dasApp.getSearchTerms);
-    dasApp.switchInputsButton.on('click', dasApp.switchInputs);    
+    app.addCycleButton.on('click', app.newDriverCycle);
 };
 
 // Document Ready
 $(function() {
-    dasApp.init();
+    app.init();
 });

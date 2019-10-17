@@ -30,19 +30,21 @@
                     </label>
                     <label for="drivers">
                         Drivers
-                        <input id="drivers-input" type="number" name="drivers" min="1" max="10" value="2">
+                        <input id="drivers-input" type="number" name="drivers" min="1" max="5" value="2">
                     </label>
                     <input type="submit">
                 </form>
             </div>
         </section>
-        <section id="results">
-            <aside id="trip-info">
-                <h2>Your Trip Information</h2>
-                <h3 id="distance">Distance: <span id="distance-output"></span></h3>
-                <h3 id="duration">Duration: <span id="duration-output"></span></h3>
-            </aside>
+        <aside id="trip-info">
+            <h2>Your Trip Information</h2>
+            <h3 id="distance">Distance</h3><span id="distance-output"></span>
+            <h3 id="duration">Duration</h3><span id="duration-output"></span>
+        </aside>
+        <section id="driver-results">
+            <h2>Driving Times</h2>
             <div id="drivers-container"></div>
+            <button type="button" id="add-cycle">Add a cycle</button>
         </section>
     </main>
     <footer>
