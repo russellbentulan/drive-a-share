@@ -2,7 +2,6 @@
 app = {};
 
 // Caching Selectors
-
 //  Trip Form inputs
 app.tripForm = $('#trip-input');
 app.originInput = $('#origin-input');
@@ -17,7 +16,6 @@ app.driversContainer = $('#drivers-container');
 
 //  Trip augmenting inputs
 app.addCycleButton = $('#add-cycle');
-
 
 // Global variables
 app.totalDuration = null;
@@ -95,20 +93,45 @@ app.calculateDriverTimesxxx = () => {
     app.addCycleButton.on('click', app.newDriverCycle);
 }
 
-// Take total duration of drive and divide it between the drivers
-app.calculateDriverTimesNO = () => {
-    dividedTime = app.totalDuration / app.totalDrivers;
-    dividedTimeHrs = Math.floor(dividedTime/3600);
-    dividedTimeMin = Math.floor((dividedTime % 3600) / 60);
+// Convert seconds to hours and minutes
+// Return a formatted string to output to the user
+app.formatTime = seconds => {
+    const hours = Math.floor(seconds/3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    let formattedHours,
+        formattedMinutes,
+        formattedTime = '';
+    
+    if (hours === 1) {
+        formattedHours = hours + 'hour'
+    } else {
+        formattedHours = hours + 'hours'
+    }
+
+    if (minutes === 1) {
+        formattedMinutes = minutes + 'minute'
+    } else {
+        formattedMinutes = minutes + 'minutes'
+    }
+    
+    if (!hours) {
+        formattedTime = formattedMinutes;
+    } else if (!minutes) {
+        formattedTime = formattedHours;
+    } else {
+        formattedTime = formattedHours + ' ' + formattedMinutes;
+    }
+
+    return formattedTime;
 }
 
 // Take global drivers object information and display it to the page
-app.displayDrivers = () => {
+app.displayDriver = () => {
     app.driversContainer.empty();
 
     for (i = 1; i <= app.totalDrivers; i++) {
         const driverInfo = app.allDrivers[i];
-        console.log(driverInfo)
+        console.log(driverInfo);
     }
 }
 
@@ -127,15 +150,15 @@ app.newDriverCycle = () => {
                 cycles: [app.totalCycles]
             }
         }
+        app.displayDriver();
     } else {
         const driveTime = app.totalDuration / app.totalDrivers / app.totalCycles;
         for (i = 1; i <= app.totalDrivers; i++) {
             app.allDrivers[i].driveTime = driveTime;
             app.allDrivers[i].cycles.push(app.totalCycles);
         }
+        app.displayDriver();
     }
-
-    app.displayDrivers();
 }
 
 // Change total cycles to 0 ( newDriverCycle adds 1 cycle )
