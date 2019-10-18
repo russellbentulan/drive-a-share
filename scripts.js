@@ -33,21 +33,27 @@ app.loggedCoordinates = {};
 // Add options to the datalist using the response
 // Log location name and coordinates into a global object (only if it doesn't exist already)
 app.getSearchTerms = function() {
+    
     searchTerms = $(this).val();
+
     if ( searchTerms.length >= 3 ) {
+
         $.ajax({
             url: `${appConfig.mbPlaces}${searchTerms}.json?access_token=${appConfig.mbToken}&autocomplete=true&types=place&limit=5`,
             method: 'GET',
             dataType: 'json'
         }).then(data => {
+
             const allLocations = data.features.values();
             for (const locationInfo of allLocations) {
-                if (!app.loggedCoordinates[locationInfo.place_name]) {
-                    app.loggedCoordinates[locationInfo.place_name] = locationInfo.center;
-                    const optionHtml = `<option value="${locationInfo.place_name}"`;
+                locationName = locationInfo.place_name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                if (!app.loggedCoordinates[locationName]) {
+                    app.loggedCoordinates[locationName] = locationInfo.center;
+                    const optionHtml = `<option value="${locationName}"`;
                     $(this).next('datalist').append(optionHtml);
                 }
             }
+
         }).catch(err => {
             // TODO: Add a section to the page displaying the error
             console.log("There must have been a mistake", err);
@@ -106,9 +112,27 @@ app.formatTime = seconds => {
     return formattedTime;
 }
 
-// Check each cycle if it has drivers
-// Display the drivers in each cycle
-app.displayDrivers = () => {
+app.timeCount = seconds => {
+    const hours = Math.floor(seconds/3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    let hoursString, minutesString = ''
+    if ( hours < 10 ) {
+        hoursString = `0${hours}`;
+    }
+
+    if ( minutes < 10 ) {
+        minutesString = `0${minutes}`;
+    }
+
+    if (!hours && !minutes ) {
+        return "This drive is too short!";
+    } else {
+        return hoursString + ":" + minutesString;
+    }
+}
+
+// 
+app.displayDrivers = evenDriveTime => {
     app.driversContainer.empty();
     
     cycleInfoHtml = `
@@ -119,40 +143,16 @@ app.displayDrivers = () => {
     app.driversContainer.append(cycleInfoHtml);
     
     driverInfoHtml = `
-        <h4 class="driver">Each person's time behind the wheel: ${app.allDrivers[1].driveTime}</h4>
+        <h4 class="driver">Drive time per person</h4>${app.allDrivers[1].driveTime}
         <p>Total Drivers: ${app.totalDrivers}</p>
         `;
         app.driversContainer.append(driverInfoHtml);
 
-
+    const times = app.timeCount(evenDriveTime);
     /***** WIP *****/
-    // for (i = 1; i <= app.totalCycles; i++) {
-    //     const thisCycle = i;
-    //     const drivingThisCycle = [];
-    //     const cycleContainer = $(`<div class="cycle--${i}"></div>`);
-    //     for (i = 1; i <= app.totalDrivers; i++) {
-    //         if (app.allDrivers[i].cycles.includes(thisCycle)) {
-    //             drivingThisCycle.push({
-    //                 name: app.allDrivers[i].name,
-    //                 driveTime: app.allDrivers[i].driveTime,
-    //                 id: i
-    //             });
-    //         }
-    //     }
-
-    //     app.driversContainer.append(cycleContainer);
-    //     drivingThisCycle.forEach(function(driver) {
-    //         driverHtml = `
-    //             <h3 class="driver-info__name">
-    //                 <span class="driver-info__title">Name:</span> ${driver.name}
-    //             </h3>
-    //             <p>
-    //                 <span class="driver-info__title">Drive Time:</span> ${driver.driveTime}
-    //             </p>
-    //         `;
-    //         cycleContainer.append(driverHtml);
-    //     });
-    // }
+    for (i=1; i <= app.totalCycles; i++) {
+        console.log(times);
+    }
 }
 
 // Add new legs to divide the total drive
@@ -166,8 +166,6 @@ app.newDriverCycle = () => {
         app.allDrivers[i].driveTime = app.formatTime(driveTime);
         app.allDrivers[i].cycles.push(app.totalCycles);
     }
-
-    app.displayDrivers();
 }
 
 // Change total cycles to 0 ( newDriverCycle adds 1 cycle )
@@ -189,7 +187,11 @@ app.initialCycle = () => {
             isEditable: true
         }
     }
-    app.displayDrivers();
+}
+
+// Display Total Distance and Total Duration
+app.showTripOverview = () => {
+    
 }
 
 // Take origin and destination coordinates when form is submitted
@@ -210,26 +212,30 @@ app.getNavigationInfo = coordinatesObject => {
             app.totalDistance = navInfo.distance;
             app.totalDrivers = app.driversInput.val();
             
-            app.showNavigationInfo();
-            app.initialCycle();
+            app.showTripOverview();
         } else {
-            console.log("Sorry, there were no directions found for these locations.")
+            alert("Sorry, there were no directions found for these locations.")
         }
     }).catch(err => {
         console.log("There must have been a mistake", err);
     });
 };
 
-// When user submits the form, get the origin and destination names and match them to their coordinates
+// When user submits the form, check if the user has typed something with a logged coordinate
 // Query the API for the navigation instructions
 app.getFormValues = () => {
     const originName = app.originInput.val();
     const destinationName = app.destinationInput.val();
-    const coordinates = {
-        orgin: app.loggedCoordinates[originName],
-        destination: app.loggedCoordinates[destinationName]
-    };
-    app.getNavigationInfo(coordinates);
+    if (app.loggedCoordinates[originName] && app.loggedCoordinates[destinationName]) {
+        const coordinates = {
+            orgin: app.loggedCoordinates[originName],
+            destination: app.loggedCoordinates[destinationName]
+        };
+        app.getNavigationInfo(coordinates);
+    } else {
+        // TODO replace with a modal
+        alert('Sorry, there was a problem getting the directions. Please choose a location name from the dropdown list.');
+    }
 }
 
 // Take the values from each location input and flip them around

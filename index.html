@@ -5,47 +5,73 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Drive-a-share</title>
-
+    <script src="https://kit.fontawesome.com/ff995803cc.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header>
-        <h1>Drive-a-share</h1>
-        <p>Fall for a trip system that works.</p>
+        <h1 class="page-title">Drive-a-share</h1>
+        <p class="page-description">Plan on spending time on the road with your friends. Enter your roadtrip details and see how you'll be splitting up the time driving on your journey.</p>
     </header>
     <main>
         <section id="user-input">
-            <div class="wrapper">
+            <div class="wrapper flex">
                 <form autocomplete="off" id="trip-input">
-                    <label for="origin">
+                    <fieldset>
+                        <legend>Enter the names of each city</legend>
+                        <label for="origin-input" class="label">
                             Starting location
-                        <input id="origin-input" type="text" name="origin" list="origin-locations" placeholder="Toronto, Ontario">
-                        <datalist id="origin-locations"></datalist>
-                    </label>
-                    <button type="button" id="switch-locations">Turn around</button>
-                    <label for="destination">
+                            <input id="origin-input" type="text" name="origin" list="origin-locations" placeholder="Toronto, Ontario, Canada" title="Enter the origin location name">
+                            <datalist id="origin-locations"></datalist>
+                        </label>
+                        <button type="button" id="switch-locations" title="switch starting and destination locations"><i class="fas fa-exchange-alt"></i></button>
+                        <label for="destination-input" class="label">
                             Destination
-                        <input id="destination-input" type="text" name="destination" list="destination-locations" placeholder="Charlottetown, Prince Edward Island">
-                        <datalist id="destination-locations"></datalist>
-                    </label>
-                    <label for="drivers">
-                        Drivers
-                        <input id="drivers-input" type="number" name="drivers" min="1" max="5" value="2">
-                    </label>
-                    <input type="submit">
+                            <input id="destination-input" type="text" name="destination" list="destination-locations" placeholder="Vancouver, British Columbia, Canada" title="Enter the destination location name">
+                            <datalist id="destination-locations"></datalist>
+                        </label>
+                    </fieldset>
+
+                    <fieldset>
+                        <legend>Enter additional details</legend>
+                        <label for="drivers-input" class="label">
+                            <input id="drivers-input" type="number" name="drivers" min="1" max="5" value="2" title="Choose the total driver count">
+                            Total Drivers
+                        </label>
+                    </fieldset>     
+                    <input type="submit" value="Submit" title="Submit trip details" id="form-submit">
                 </form>
             </div>
-        </section>
-        <aside id="trip-info">
-            <h2>Your Trip Information</h2>
-            <h3 id="distance">Distance</h3><span id="distance-output"></span>
-            <h3 id="duration">Duration</h3><span id="duration-output"></span>
-        </aside>
-        <section id="driver-results">
-            <h2>Driving Times</h2>
-            <div id="drivers-container"></div>
-            <button type="button" id="add-cycle">Add a cycle</button>
-        </section>
+        </section> 
+            <!-- #user-input -->
+
+        <div class="wrapper">
+            <section id="nav-results">
+                <h2>Your Trip Information</h2>
+
+                <div class="flex">
+                    <aside id="trip-info">
+                        <h3 id="distance">
+                            Total Distance: <span id="distance-output"><!-- distance in km --></span>
+                        </h3>
+                        <h3 id="duration">
+                            Travel Duration: <span id="duration-output"><!-- duration in hrs and mins --></span>
+                        </h3>
+                    </aside>
+                    <!-- #trip-info -->
+
+                    <div id="driver-details">
+                        You'll reach your destination with<br/>
+                        <span id="detail__drivers"><!-- total drivers --></span><br/>
+                        at the wheel for<br/> 
+                        <span id="detail__drive-time"><!-- split up time here --></span>
+                    </div>
+                    <!-- #driver-results -->
+
+                </div>
+            </section>
+            <!-- #nav-results -->
+        </div>
     </main>
     <footer>
 
