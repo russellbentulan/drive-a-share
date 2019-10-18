@@ -18,6 +18,7 @@ app.navigationContainer = $('#navigation-results');
 // Jokes
 app.jokeButton = $('#dad-button');
 app.jokeOutput = $('#dad-joke');
+app.jokesContainer = $('#dad-joke-container');
 
 // Global variables
 app.totalDuration = null;
@@ -212,6 +213,7 @@ app.getNavigationInfo = coordinatesObject => {
             app.navigationContainer.fadeTo(300, 1);
             app.showNavigationInfo();
             app.showTripOverview();
+            app.jokesContainer.fadeTo(500, 1);
         } else {
             alert("Sorry, there were no directions found for these locations.")
         }
@@ -260,7 +262,6 @@ app.switchInputs = () => {
 
 // init Function
 app.init = () => {
-    app.navigationContainer.hide();
     app.originInput.on('input', app.getSearchTerms);
     app.destinationInput.on('input', app.getSearchTerms);
     app.switchInputsButton.on('click', app.switchInputs);    
@@ -275,6 +276,8 @@ app.init = () => {
         app.getFunny();
     })
     
+    app.navigationContainer.hide();
+    app.jokesContainer.fadeTo(0,0);
 };
 
 // Document Ready
