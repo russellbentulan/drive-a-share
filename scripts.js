@@ -13,13 +13,18 @@ app.driversInput = $('#drivers-input');
 app.distanceOutput = $('#distance-output');
 app.durationOutput = $('#duration-output');
 app.driveOutput = $('#drive-details');
+app.navigationContainer = $('#navigation-results');
+
+// Jokes
+app.jokeButton = $('#dad-button');
+app.jokeOutput = $('#dad-joke');
 
 // Global variables
 app.totalDuration = null;
 app.totalDistance = null;
 app.totalDrivers = null;
-app.totalCycles = null;
-app.totalLegs = null;
+// app.totalCycles = null;
+// app.totalLegs = null;
 
 // Log searched cities with their coordinate array to save extra api requests
 app.loggedCoordinates = {};
@@ -51,7 +56,6 @@ app.getSearchTerms = function() {
                 }
             }
         }).catch(err => {
-            // TODO: Add a section to the page displaying the error
             console.log("There must have been a mistake", err);
         });
     }
@@ -108,27 +112,26 @@ app.formatTime = seconds => {
     return formattedTime;
 }
 
-// 
-app.displayDrivers = evenDriveTime => {
-    app.driversContainer.empty();
-    
-    cycleInfoHtml = `
-        <h3>
-            Total cycles: ${app.totalCycles}
-        </h3>
-    `;
-    app.driversContainer.append(cycleInfoHtml);
-    
-    driverInfoHtml = `
-        <h4 class="driver">Drive time per person</h4>${app.allDrivers[1].driveTime}
-        <p>Total Drivers: ${app.totalDrivers}</p>
-        `;
-        app.driversContainer.append(driverInfoHtml);
-
-    const times = app.timeCount(evenDriveTime);
-}
-
 /*** WIP ***/
+// app.displayDrivers = evenDriveTime => {
+//     app.driversContainer.empty();
+    
+//     cycleInfoHtml = `
+//         <h3>
+//             Total cycles: ${app.totalCycles}
+//         </h3>
+//     `;
+//     app.driversContainer.append(cycleInfoHtml);
+    
+//     driverInfoHtml = `
+//         <h4 class="driver">Drive time per person</h4>${app.allDrivers[1].driveTime}
+//         <p>Total Drivers: ${app.totalDrivers}</p>
+//         `;
+//         app.driversContainer.append(driverInfoHtml);
+
+//     const times = app.timeCount(evenDriveTime);
+// }
+
 // Add new legs to divide the total drive
 // Calculate new drive times for each driver and cycle
 // Display driver information on the page
@@ -145,30 +148,32 @@ app.displayDrivers = evenDriveTime => {
 // Change total cycles to 0 ( newDriverCycle adds 1 cycle )
 // Set an empty drivers object
 // Populate the emptied drivers object with new drivers
-app.initialCycle = () => {
-    app.driversContainer.empty();
-    app.totalCycles = 1;
-    app.totalLegs = app.totalDrivers;
-    app.allDrivers = {};
+// app.initialCycle = () => {
+//     app.driversContainer.empty();
+//     app.totalCycles = 1;
+//     app.totalLegs = app.totalDrivers;
+//     app.allDrivers = {};
 
-    const initialTime = app.totalDuration / app.totalLegs;
-    for (i = 1; i <= app.totalDrivers; i++) {
-        app.allDrivers[i] = {
-            name: 'Driver ' + i,
-            driveTime: app.formatTime(initialTime),
-            id: i
-        }
-    }
-}
+//     const initialTime = app.totalDuration / app.totalLegs;
+//     for (i = 1; i <= app.totalDrivers; i++) {
+//         app.allDrivers[i] = {
+//             name: 'Driver ' + i,
+//             driveTime: app.formatTime(initialTime),
+//             id: i
+//         }
+//     }
+// }
 
 // Display a sentence with the drive time split in between each driver
 // Check if the shared drive time is long enough to split up amongst drivers
 app.showTripOverview = () => {
     const sharedDriveTime = app.totalDuration / app.totalDrivers;
     let driverCount = `${app.totalDrivers} driver`;
-
+    let wordEach = '';
+    
     if (app.totalDrivers > 1) {
         driverCount += 's';
+        wordEach = 'each';
     }
 
     if (sharedDriveTime >= 1) {
@@ -177,7 +182,7 @@ app.showTripOverview = () => {
                 You will reach your destination with<br/>
                 <span class="driver-output">${driverCount}</span><br/>
                 behind the wheel for<br/>
-                <span class="drive-time-output">${app.formatTime(sharedDriveTime)}</span>
+                <span class="drive-time-output">${app.formatTime(sharedDriveTime)}</span> ${wordEach}
             </p>
         `;
         app.driveOutput.html(outputHtml);
@@ -204,6 +209,7 @@ app.getNavigationInfo = coordinatesObject => {
             app.totalDistance = navInfo.distance;
             app.totalDrivers = app.driversInput.val();
             
+            app.navigationContainer.fadeTo(300, 1);
             app.showNavigationInfo();
             app.showTripOverview();
         } else {
@@ -231,6 +237,20 @@ app.getFormValues = () => {
     }
 }
 
+// Get a random joke from the API and place it on the page
+app.getFunny = () => {
+    $.ajax({
+        url: appConfig.jokesBaseUrl,
+        method: 'get',
+        dataType: 'json',
+        header: 'User-Agent: Drive-a-share (https://github.com/russellbentulan/drive-a-share)'
+    }).then(dad => {
+        app.jokeOutput.html(dad.joke);
+    }).catch(err => {
+        console.log(err);
+    });
+}
+
 // Take the values from each location input and flip them around
 app.switchInputs = () => {
     const tempOriginVal = app.originInput.val();
@@ -240,13 +260,21 @@ app.switchInputs = () => {
 
 // init Function
 app.init = () => {
+    app.navigationContainer.hide();
     app.originInput.on('input', app.getSearchTerms);
     app.destinationInput.on('input', app.getSearchTerms);
     app.switchInputsButton.on('click', app.switchInputs);    
     app.tripForm.on('submit', e => {
         e.preventDefault();
+        app.navigationContainer.fadeTo(300, 0);
         app.getFormValues();
     });
+
+    app.jokeButton.on('click', e => {
+        e.preventDefault;
+        app.getFunny();
+    })
+    
 };
 
 // Document Ready

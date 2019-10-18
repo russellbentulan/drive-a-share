@@ -85,3 +85,8 @@ datalist {
     flex-grow: 1;
     text-align: center;
 }
+
+/* Dad Jokes */
+#dad-joke-container {
+    text-align: center;
+}
