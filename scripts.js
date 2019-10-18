@@ -12,10 +12,7 @@ app.driversInput = $('#drivers-input');
 //  Trip information outputs
 app.distanceOutput = $('#distance-output');
 app.durationOutput = $('#duration-output');
-app.driversContainer = $('#drivers-container');
-
-//  Trip augmenting inputs
-app.addCycleButton = $('#add-cycle');
+app.driveOutput = $('#drive-details');
 
 // Global variables
 app.totalDuration = null;
@@ -33,7 +30,6 @@ app.loggedCoordinates = {};
 // Add options to the datalist using the response
 // Log location name and coordinates into a global object (only if it doesn't exist already)
 app.getSearchTerms = function() {
-    
     searchTerms = $(this).val();
 
     if ( searchTerms.length >= 3 ) {
@@ -43,17 +39,17 @@ app.getSearchTerms = function() {
             method: 'GET',
             dataType: 'json'
         }).then(data => {
-
             const allLocations = data.features.values();
+            
             for (const locationInfo of allLocations) {
                 locationName = locationInfo.place_name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
                 if (!app.loggedCoordinates[locationName]) {
                     app.loggedCoordinates[locationName] = locationInfo.center;
                     const optionHtml = `<option value="${locationName}"`;
                     $(this).next('datalist').append(optionHtml);
                 }
             }
-
         }).catch(err => {
             // TODO: Add a section to the page displaying the error
             console.log("There must have been a mistake", err);
@@ -112,25 +108,6 @@ app.formatTime = seconds => {
     return formattedTime;
 }
 
-app.timeCount = seconds => {
-    const hours = Math.floor(seconds/3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    let hoursString, minutesString = ''
-    if ( hours < 10 ) {
-        hoursString = `0${hours}`;
-    }
-
-    if ( minutes < 10 ) {
-        minutesString = `0${minutes}`;
-    }
-
-    if (!hours && !minutes ) {
-        return "This drive is too short!";
-    } else {
-        return hoursString + ":" + minutesString;
-    }
-}
-
 // 
 app.displayDrivers = evenDriveTime => {
     app.driversContainer.empty();
@@ -149,24 +126,21 @@ app.displayDrivers = evenDriveTime => {
         app.driversContainer.append(driverInfoHtml);
 
     const times = app.timeCount(evenDriveTime);
-    /***** WIP *****/
-    for (i=1; i <= app.totalCycles; i++) {
-        console.log(times);
-    }
 }
 
+/*** WIP ***/
 // Add new legs to divide the total drive
 // Calculate new drive times for each driver and cycle
 // Display driver information on the page
-app.newDriverCycle = () => {
-    app.totalCycles++;
-    app.totalLegs += app.totalDrivers;
-    const driveTime = app.totalDuration / app.totalLegs;
-    for (i = 1; i <= app.totalDrivers; i++) {
-        app.allDrivers[i].driveTime = app.formatTime(driveTime);
-        app.allDrivers[i].cycles.push(app.totalCycles);
-    }
-}
+// app.newDriverCycle = () => {
+//     app.totalCycles++;
+//     app.totalLegs += app.totalDrivers;
+//     const driveTime = app.totalDuration / app.totalLegs;
+//     for (i = 1; i <= app.totalDrivers; i++) {
+//         app.allDrivers[i].driveTime = app.formatTime(driveTime);
+//         app.allDrivers[i].cycles.push(app.totalCycles);
+//     }
+// }
 
 // Change total cycles to 0 ( newDriverCycle adds 1 cycle )
 // Set an empty drivers object
@@ -182,16 +156,34 @@ app.initialCycle = () => {
         app.allDrivers[i] = {
             name: 'Driver ' + i,
             driveTime: app.formatTime(initialTime),
-            id: i,
-            cycles: [app.totalCycles],
-            isEditable: true
+            id: i
         }
     }
 }
 
-// Display Total Distance and Total Duration
+// Display a sentence with the drive time split in between each driver
+// Check if the shared drive time is long enough to split up amongst drivers
 app.showTripOverview = () => {
-    
+    const sharedDriveTime = app.totalDuration / app.totalDrivers;
+    let driverCount = `${app.totalDrivers} driver`;
+
+    if (app.totalDrivers > 1) {
+        driverCount += 's';
+    }
+
+    if (sharedDriveTime >= 1) {
+        const outputHtml = `
+            <p id="driver-details__string">
+                You will reach your destination with<br/>
+                <span class="driver-output">${driverCount}</span><br/>
+                behind the wheel for<br/>
+                <span class="drive-time-output">${app.formatTime(sharedDriveTime)}</span>
+            </p>
+        `;
+        app.driveOutput.html(outputHtml);
+    } else {
+        app.driveOutput.html('This trip is too short!')
+    }
 }
 
 // Take origin and destination coordinates when form is submitted
@@ -212,6 +204,7 @@ app.getNavigationInfo = coordinatesObject => {
             app.totalDistance = navInfo.distance;
             app.totalDrivers = app.driversInput.val();
             
+            app.showNavigationInfo();
             app.showTripOverview();
         } else {
             alert("Sorry, there were no directions found for these locations.")
@@ -254,7 +247,6 @@ app.init = () => {
         e.preventDefault();
         app.getFormValues();
     });
-    app.addCycleButton.on('click', app.newDriverCycle);
 };
 
 // Document Ready

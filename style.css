@@ -81,6 +81,7 @@ datalist {
     margin-right: var(--grid-gutter);
 }
 
-#driver-details {
+#drive-details {
     flex-grow: 1;
+    text-align: center;
 }
